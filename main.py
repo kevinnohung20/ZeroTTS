@@ -1,11 +1,7 @@
 import os
-# Khóa 4 luồng ở mức hệ điều hành
+# Khóa 4 luồng ở mức hệ điều hành (Đã đủ để giới hạn CPU, không cần dùng thư viện torch)
 os.environ["OMP_NUM_THREADS"] = "4"
 os.environ["ONNXRUNTIME_NUM_THREADS"] = "4"
-
-import torch
-# Khóa cứng PyTorch chỉ sử dụng tối đa 4 luồng vật lý
-torch.set_num_threads(4)
 
 import io
 import numpy as np
@@ -19,7 +15,7 @@ from zerotts import ZeroTTS
 
 app = FastAPI(title="ZeroTTS API")
 
-# Mở CORS tường minh bằng cách liệt kê chính xác các domain
+# Mở CORS tường minh
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -79,12 +75,10 @@ def synthesize_stream(req: TTSRequest):
             
             chunk_buffer += c.tobytes()
 
-            # Chỉ nhả dữ liệu khi bộ đệm đạt chuẩn kích thước lớn
             while len(chunk_buffer) >= CHUNK_SIZE:
                 yield chunk_buffer[:CHUNK_SIZE]
                 chunk_buffer = chunk_buffer[CHUNK_SIZE:]
         
-        # Nhả nốt phần byte lẻ còn dư ở cuối câu
         if chunk_buffer:
             yield chunk_buffer
 
