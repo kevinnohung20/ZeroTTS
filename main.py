@@ -1,5 +1,11 @@
-import io
 import os
+
+# Cấu hình tối ưu đa luồng CPU cho ONNX Runtime và OpenMP trước khi nạp model
+os.environ["OMP_NUM_THREADS"] = "8"
+os.environ["ONNXRUNTIME_NUM_THREADS"] = "8"
+os.environ["ONNXRUNTIME_EXECUTION_PROVIDERS"] = "CPUExecutionProvider"
+
+import io
 import soundfile as sf
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response
@@ -20,6 +26,14 @@ model_path = snapshot_download(
 print(f"Loading ZeroTTS model from {model_path}...")
 tts = ZeroTTS.from_pretrained(model_path)
 print("Model loaded successfully!")
+
+# Warmup nhẹ 1 câu để ONNX Runtime cấp phát sẵn thread pool vào RAM ngay lúc start container
+try:
+    print("Warming up model...")
+    _ = tts.synthesize("Xin chào", voice="maichi")
+    print("Warmup completed!")
+except Exception as e:
+    print(f"Warmup skipped: {e}")
 
 class TTSRequest(BaseModel):
     text: str
