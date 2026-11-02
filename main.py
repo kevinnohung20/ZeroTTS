@@ -16,11 +16,10 @@ from zerotts import ZeroTTS
 app = FastAPI(title="ZeroTTS API")
 
 print("Downloading/Checking ZeroTTS model files...")
-# Tải trực tiếp file thật vào thư mục /app/model_cache (không dùng symlink để tránh lỗi ONNX)
+
 model_path = snapshot_download(
     repo_id="zeroweight-ai/ZeroTTS",
     local_dir="/app/model_cache",
-    local_dir_use_symlinks=False
 )
 
 print(f"Loading ZeroTTS model from {model_path}...")
