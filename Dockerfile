@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Cài đặt trực tiếp danh sách thư viện không cần qua file requirements.txt
+RUN pip install --no-cache-dir zerotts fastapi "uvicorn[standard]" soundfile numpy
 
 COPY main.py .
 
