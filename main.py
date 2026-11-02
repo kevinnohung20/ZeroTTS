@@ -14,11 +14,16 @@ from zerotts import ZeroTTS
 
 app = FastAPI(title="ZeroTTS API")
 
-# Mở CORS toàn diện: tắt allow_credentials để cho phép mọi domain ("*")
+# Mở CORS tường minh bằng cách liệt kê chính xác các domain
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=False, 
+    allow_origins=[
+        "https://nav.hoangphucshop.com",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5500"
+    ],
+    allow_credentials=True, 
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Sample-Rate", "Content-Type"],
