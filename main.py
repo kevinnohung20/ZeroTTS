@@ -1,6 +1,11 @@
 import os
-os.environ["OMP_NUM_THREADS"] = "8"
-os.environ["ONNXRUNTIME_NUM_THREADS"] = "8"
+# Khóa 4 luồng ở mức hệ điều hành
+os.environ["OMP_NUM_THREADS"] = "4"
+os.environ["ONNXRUNTIME_NUM_THREADS"] = "4"
+
+import torch
+# Khóa cứng PyTorch chỉ sử dụng tối đa 4 luồng vật lý
+torch.set_num_threads(4)
 
 import io
 import numpy as np
@@ -60,8 +65,8 @@ def synthesize_stream(req: TTSRequest):
     
     def audio_generator():
         chunk_buffer = b""
-        # Gom đủ 8192 bytes (khoảng ~85ms âm thanh float32) rồi mới nhả để tối ưu luồng mạng
-        CHUNK_SIZE = 8192 
+        # Tăng CHUNK_SIZE lên 24576 bytes (~250ms âm thanh). Giảm chi phí mạng, chống vấp.
+        CHUNK_SIZE = 24576 
 
         for chunk in tts.synthesize_stream(req.text, voice=req.voice):
             c = np.asarray(chunk).squeeze()
@@ -74,7 +79,7 @@ def synthesize_stream(req: TTSRequest):
             
             chunk_buffer += c.tobytes()
 
-            # Chỉ nhả dữ liệu khi bộ đệm đủ lớn để loa chạy mượt
+            # Chỉ nhả dữ liệu khi bộ đệm đạt chuẩn kích thước lớn
             while len(chunk_buffer) >= CHUNK_SIZE:
                 yield chunk_buffer[:CHUNK_SIZE]
                 chunk_buffer = chunk_buffer[CHUNK_SIZE:]
