@@ -54,20 +54,29 @@ def synthesize_stream(req: TTSRequest):
         raise HTTPException(status_code=400, detail="Text cannot be empty")
     
     def audio_generator():
+        chunk_buffer = b""
+        # Gom đủ 8192 bytes (khoảng ~85ms âm thanh float32) rồi mới nhả để tối ưu luồng mạng
+        CHUNK_SIZE = 8192 
+
         for chunk in tts.synthesize_stream(req.text, voice=req.voice):
-            # 1. Ép phẳng về mảng 1 chiều
             c = np.asarray(chunk).squeeze()
             
-            # 2. Xử lý chuẩn hóa nếu chunk ở dạng int16 hoặc float
             if c.dtype == np.int16:
                 c = c.astype(np.float32) / 32768.0
             else:
                 c = c.astype(np.float32)
-                # Giới hạn biên độ [-1.0, 1.0] triệt tiêu hoàn toàn rè/bể tiếng (clipping)
                 c = np.clip(c, -1.0, 1.0)
             
-            # 3. Xuất ra byte float32 chuẩn C-contiguous
-            yield c.tobytes()
+            chunk_buffer += c.tobytes()
+
+            # Chỉ nhả dữ liệu khi bộ đệm đủ lớn để loa chạy mượt
+            while len(chunk_buffer) >= CHUNK_SIZE:
+                yield chunk_buffer[:CHUNK_SIZE]
+                chunk_buffer = chunk_buffer[CHUNK_SIZE:]
+        
+        # Nhả nốt phần byte lẻ còn dư ở cuối câu
+        if chunk_buffer:
+            yield chunk_buffer
 
     return StreamingResponse(
         audio_generator(),
