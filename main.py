@@ -14,11 +14,11 @@ from zerotts import ZeroTTS
 
 app = FastAPI(title="ZeroTTS API")
 
-# Mở CORS toàn diện và expose header X-Sample-Rate cho Web JS đọc
+# Mở CORS toàn diện: tắt allow_credentials để cho phép mọi domain ("*")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False, 
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["X-Sample-Rate", "Content-Type"],
